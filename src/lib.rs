@@ -320,7 +320,7 @@ impl GroqClient {
             body["stop"] = json!(stop);
         }
 
-        let response = self.send_request(body, &format!("{}chat/completions", self.endpoint))?;
+        let response = self.send_request(body, &format!("{}/chat/completions", self.endpoint))?;
         let chat_completion_response: ChatCompletionResponse = response.json()?;
         Ok(chat_completion_response)
     }
