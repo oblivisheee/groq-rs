@@ -61,4 +61,4 @@ Contributions are welcome! If you have an issue or want to suggest improvements,
 
 ## License
 
-This library is licensed under the MIT License. See the LICENSE file for more information.
+This library is licensed under the Apache License 2.0. See the LICENSE file for more information.
