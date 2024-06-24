@@ -4,13 +4,13 @@
 This library provides the ability to interact with the Groq API. It allows you to send requests to the API and receive responses via the `GroqClient` interface.
 ## How to Install
 
-To install the `groq-api-rs` crate, add it to your Rust project's dependencies by running the following command in your project's directory:
+To install the `groq-api-rust` crate, add it to your Rust project's dependencies by running the following command in your project's directory:
 
-cargo add groq-api-rs
+cargo add groq-api-rust
 
 ## Usage
 
-1. Import the `groq-api-rs` crate into your Rust project.
+1. Import the `groq-api-rust` crate into your Rust project.
 
 2. Create an instance of the `GroqClient` struct by calling `GroqClient::new()` and providing your Groq API key and an optional endpoint URL.
 
@@ -23,7 +23,7 @@ cargo add groq-api-rs
 ### Chat Completion
 
 ```rust
-use groq_api_rs::{GroqClient, ChatCompletionMessage, ChatCompletionRoles, ChatCompletionRequest}
+use groq_api_rust::{GroqClient, ChatCompletionMessage, ChatCompletionRoles, ChatCompletionRequest}
 let api_key = std::env::var("GROQ_API_KEY").unwrap();
 let client = GroqClient::new(api_key, None);
 let messages = vec![ChatCompletionMessage {
@@ -39,7 +39,7 @@ println!("{}", response.choices[0].message.content);
 ### Speech To Text
 
 ```rust
-use groq_api_rs::{GroqClient, SpeechToTextRequest}
+use groq_api_rust::{GroqClient, SpeechToTextRequest}
 let api_key = std::env::var("GROQ_API_KEY").unwrap();
 let client = GroqClient::new(api_key, None);
 let audio_file_path = "audio_file.mp3";
