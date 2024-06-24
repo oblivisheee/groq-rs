@@ -23,7 +23,7 @@ cargo add groq-api-rust
 ### Chat Completion
 
 ```rust
-use groq_api_rust::{GroqClient, ChatCompletionMessage, ChatCompletionRoles, ChatCompletionRequest}
+use groq_api_rust::{GroqClient, ChatCompletionMessage, ChatCompletionRoles, ChatCompletionRequest};
 let api_key = "your_api_key";
 let client = GroqClient::new(api_key.to_string(), None);
 let messages = vec![ChatCompletionMessage {
@@ -40,7 +40,8 @@ assert!(!response.choices.is_empty());
 ### Speech To Text
 
 ```rust
-use groq_api_rust::{GroqClient, SpeechToTextRequest}
+use groq_api_rust::{GroqClient, SpeechToTextRequest};
+use std::{fs::File, io::Read};
 let api_key = std::env::var("GROQ_API_KEY").unwrap();
 let client = GroqClient::new(api_key, None);
 let audio_file_path = "audio_file.mp3";
