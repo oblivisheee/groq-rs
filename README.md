@@ -1,4 +1,4 @@
-# Groq API Rust Client Library
+# Unofficial Groq API Rust Client Library
 
 
 This library provides the ability to interact with the Groq API. It allows you to send requests to the API and receive responses via the `GroqClient` interface.
