@@ -232,7 +232,7 @@ pub struct GroqClient {
 impl GroqClient {
     /// Creates a new `GroqClient` with the given API key and optional endpoint.
     pub fn new(api_key: String, endpoint: Option<String>) -> Self {
-        let ep: String = endpoint.unwrap_or_else(|| String::from("https://api.groq.com/"));
+        let ep: String = endpoint.unwrap_or_else(|| String::from("https://api.groq.com/openai/v1"));
         Self {
             api_key,
             client: Client::new(),
@@ -265,9 +265,9 @@ impl GroqClient {
             form = form.text("language", language);
         }
         let link_addition = if request.english_text {
-            "openai/v1/audio/translations"
+            "/audio/translations"
         } else {
-            "openai/v1/audio/transcriptions"
+            "/audio/transcriptions"
         };
         if let Some(model) = request.model {
             form = form.text("model", model);
@@ -320,10 +320,7 @@ impl GroqClient {
             body["stop"] = json!(stop);
         }
 
-        let response = self.send_request(
-            body,
-            &format!("{}openai/v1/chat/completions", self.endpoint),
-        )?;
+        let response = self.send_request(body, &format!("{}chat/completions", self.endpoint))?;
         let chat_completion_response: ChatCompletionResponse = response.json()?;
         Ok(chat_completion_response)
     }

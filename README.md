@@ -18,6 +18,7 @@ This library provides the ability to interact with the Groq API. It allows you t
 ### Chat Completion
 
 ```rust
+use groq_api_rs::{GroqClient, ChatCompletionMessage, ChatCompletionRoles, ChatCompletionRequest}
 let api_key = std::env::var("GROQ_API_KEY").unwrap();
 let client = GroqClient::new(api_key, None);
 let messages = vec![ChatCompletionMessage {
@@ -33,6 +34,7 @@ println!("{}", response.choices[0].message.content);
 ### Speech To Text
 
 ```rust
+use groq_api_rs::{GroqClient, SpeechToTextRequest}
 let api_key = std::env::var("GROQ_API_KEY").unwrap();
 let client = GroqClient::new(api_key, None);
 let audio_file_path = "audio_file.mp3";
@@ -61,4 +63,4 @@ Contributions are welcome! If you have an issue or want to suggest improvements,
 
 ## License
 
-This library is licensed under the MIT License. See the LICENSE file for more information.
+This library is licensed under the Apache License 2.0 License. See the LICENSE file for more information.
