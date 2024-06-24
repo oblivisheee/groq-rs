@@ -1,6 +1,6 @@
 [package]
 name = "groq-api-rust"
-version = "0.1.1"
+version = "0.1.2"
 edition = "2021"
 authors = ["oblivisheee <merizo.labs@gmail.com>"]
 description = "This library provides the ability to interact with the Groq API."
@@ -10,6 +10,8 @@ keywords = ["groq", "llm", "ai", "language"]
 
 
 [dependencies]
+log = "0.4.21"
 reqwest = { version = "0.12.5", features = ["blocking", "json", "multipart"] }
 serde = { version = "1.0.203", features = ["derive"] }
 serde_json = "1.0.117"
+thiserror = "1.0.61"

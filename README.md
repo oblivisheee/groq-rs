@@ -24,16 +24,17 @@ cargo add groq-api-rust
 
 ```rust
 use groq_api_rust::{GroqClient, ChatCompletionMessage, ChatCompletionRoles, ChatCompletionRequest}
-let api_key = std::env::var("GROQ_API_KEY").unwrap();
-let client = GroqClient::new(api_key, None);
+let api_key = "your_api_key";
+let client = GroqClient::new(api_key.to_string(), None);
 let messages = vec![ChatCompletionMessage {
     role: ChatCompletionRoles::User,
-    content: "Your Prompt".to_string(),
+    content: "Hello".to_string(),
     name: None,
 }];
 let request = ChatCompletionRequest::new("llama3-70b-8192", messages);
 let response = client.chat_completion(request).unwrap();
 println!("{}", response.choices[0].message.content);
+assert!(!response.choices.is_empty());
 ```
 
 ### Speech To Text
