@@ -1,0 +1,15 @@
+[package]
+name = "groq-rs"
+version = "0.1.0"
+edition = "2021"
+authors = ["oblivisheee <merizo.labs@gmail.com>"]
+description = "This library provides the ability to interact with the Groq API."
+repository = "https://github.com/oblivisheee/groq-rs"
+license = "Apache License 2.0"
+keywords = ["groq", "llm", "ai", "language"]
+
+
+[dependencies]
+reqwest = { version = "0.12.5", features = ["blocking", "json", "multipart"] }
+serde = { version = "1.0.203", features = ["derive"] }
+serde_json = "1.0.117"
