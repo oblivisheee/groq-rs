@@ -302,7 +302,7 @@ mod tests {
 
     #[test]
     fn test_chat_completion() {
-        let api_key = "your_api_key";
+        let api_key = std::env::var("GROQ_API_KEY").unwrap();
         let client = GroqClient::new(api_key.to_string(), None);
         let messages = vec![ChatCompletionMessage {
             role: ChatCompletionRoles::User,
@@ -317,7 +317,7 @@ mod tests {
 
     #[test]
     fn test_speech_to_text() {
-        let api_key = "your_api_key";
+        let api_key = std::env::var("GROQ_API_KEY").unwrap();
         let client = GroqClient::new(api_key.to_string(), None);
         let audio_file_path = "onepiece_demo.mp4";
         let mut file = File::open(audio_file_path).expect("Failed to open audio file");
