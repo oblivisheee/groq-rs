@@ -2,10 +2,15 @@
 
 
 This library provides the ability to interact with the Groq API. It allows you to send requests to the API and receive responses via the `GroqClient` interface.
+## How to Install
+
+To install the `groq-api-rs` crate, add it to your Rust project's dependencies by running the following command in your project's directory:
+
+cargo add groq-api-rs
 
 ## Usage
 
-1. Import the `groq-rs` crate into your Rust project.
+1. Import the `groq-api-rs` crate into your Rust project.
 
 2. Create an instance of the `GroqClient` struct by calling `GroqClient::new()` and providing your Groq API key and an optional endpoint URL.
 
