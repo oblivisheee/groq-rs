@@ -5,7 +5,7 @@ edition = "2021"
 authors = ["oblivisheee <merizo.labs@gmail.com>"]
 description = "This library provides the ability to interact with the Groq API."
 repository = "https://github.com/oblivisheee/groq-rs"
-license = "Apache License 2.0"
+license = "Apache-2.0"
 keywords = ["groq", "llm", "ai", "language"]
 
 
