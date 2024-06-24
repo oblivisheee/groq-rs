@@ -24,7 +24,7 @@ cargo add groq-api-rust
 
 ```rust
 use groq_api_rust::{GroqClient, ChatCompletionMessage, ChatCompletionRoles, ChatCompletionRequest};
-let api_key = "your_api_key";
+let api_key = std::env::var("GROQ_API_KEY").unwrap();
 let client = GroqClient::new(api_key.to_string(), None);
 let messages = vec![ChatCompletionMessage {
     role: ChatCompletionRoles::User,
