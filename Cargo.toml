@@ -1,6 +1,6 @@
 [package]
 name = "groq-api-rust"
-version = "0.2.2"
+version = "0.2.3"
 edition = "2021"
 authors = ["oblivisheee <merizo.labs@gmail.com>"]
 description = "This library provides the ability to interact with the Groq API."
