@@ -1,9 +1,11 @@
 mod message;
 pub use message::*;
-use reqwest::blocking::multipart::{Form, Part};
-use reqwest::blocking::{Client, Response};
-use reqwest::multipart::{Form as AForm, Part as APart};
-use reqwest::{Client as AClient, Response as AResponse};
+use reqwest::{
+    blocking::multipart::{Form, Part},
+    blocking::{Client, Response},
+    multipart::{Form as AForm, Part as APart},
+    Client as AClient, Response as AResponse,
+};
 use serde_json::{json, Value};
 use std::sync::Arc;
 
