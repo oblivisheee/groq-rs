@@ -6,7 +6,9 @@ This library provides the ability to interact with the Groq API. It allows you t
 
 To install the `groq-api-rust` crate, add it to your Rust project's dependencies by running the following command in your project's directory:
 
+```
 cargo add groq-api-rust
+```
 
 ## Usage
 
@@ -60,9 +62,78 @@ let response = client
 println!("Speech to Text Response: {}", response.text);
 ```
 
+### Async Chat Completion
+
+```rust
+let api_key = std::env::var("GROQ_API_KEY").unwrap();
+let client = AsyncGroqClient::new(api_key, None);
+
+let messages1 = vec![ChatCompletionMessage {
+    role: ChatCompletionRoles::User,
+    content: "Hello".to_string(),
+    name: None,
+}];
+let request1 = ChatCompletionRequest::new("llama3-70b-8192", messages1);
+
+let messages2 = vec![ChatCompletionMessage {
+    role: ChatCompletionRoles::User,
+    content: "How are you?".to_string(),
+    name: None,
+}];
+let request2 = ChatCompletionRequest::new("llama3-70b-8192", messages2);
+
+let (response1, response2) = tokio::join!(
+    client.chat_completion(request1),
+    client.chat_completion(request2)
+);
+
+let response1 = response1.expect("Failed to get response for request 1");
+let response2 = response2.expect("Failed to get response for request 2");
+
+println!("Response 1: {}", response1.choices[0].message.content);
+println!("Response 2: {}", response2.choices[0].message.content);
+```
+
+### Async Speech To Text
+
+```rust
+let api_key = std::env::var("GROQ_API_KEY").unwrap();
+        let client = AsyncGroqClient::new(api_key, None);
+
+        let audio_file_path1 = "onepiece_demo.mp4";
+        let audio_file_path2 = "save.ogg";
+
+        let (audio_data1, audio_data2) = tokio::join!(
+            tokio::fs::read(audio_file_path1),
+            tokio::fs::read(audio_file_path2)
+        );
+
+        let audio_data1 = audio_data1.expect("Failed to read first audio file");
+        let audio_data2 = audio_data2.expect("Failed to read second audio file");
+
+        let (request1, request2) = (
+            SpeechToTextRequest::new(audio_data1)
+                .temperature(0.7)
+                .language("en")
+                .model("whisper-large-v3"),
+            SpeechToTextRequest::new(audio_data2)
+                .temperature(0.7)
+                .language("en")
+                .model("whisper-large-v3")
+        );
+        let (response1, response2) = tokio::join!(
+            client.speech_to_text(request1),
+            client.speech_to_text(request2)
+        );
+
+        let response1 = response1.expect("Failed to get response for first audio");
+        let response2 = response2.expect("Failed to get response for second audio");
+
+        println!("Speech to Text Response 1: {:?}", response1);
+        println!("Speech to Text Response 2: {:?}", response2);
+```
 ## TODO:
 - [ ] Implement streaming of requests.
-- [ ] Implement asynchronous methods.
 
 ## Contributing
 

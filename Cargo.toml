@@ -1,12 +1,13 @@
 [package]
 name = "groq-api-rust"
-version = "0.1.5"
+version = "0.2.0"
 edition = "2021"
 authors = ["oblivisheee <merizo.labs@gmail.com>"]
 description = "This library provides the ability to interact with the Groq API."
 repository = "https://github.com/oblivisheee/groq-rs"
 license = "Apache-2.0"
-keywords = ["groq", "llm", "ai", "language"]
+keywords = ["groq", "llm", "ai", "language", "api"]
+categories = ["API bindings"]
 
 
 [dependencies]
@@ -15,3 +16,5 @@ reqwest = { version = "0.12.5", features = ["blocking", "json", "multipart"] }
 serde = { version = "1.0.203", features = ["derive"] }
 serde_json = "1.0.117"
 thiserror = "1.0.61"
+tokio = { version = "1.38.0", features = ["macros", "fs"] }
+tokio-macros = "2.3.0"
