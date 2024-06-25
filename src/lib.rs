@@ -1,5 +1,5 @@
-pub mod message;
-use message::*;
+mod message;
+pub use message::*;
 use reqwest::blocking::multipart::{Form, Part};
 use reqwest::blocking::{Client, Response};
 use reqwest::multipart::{Form as AForm, Part as APart};
