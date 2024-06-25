@@ -65,6 +65,8 @@ println!("Speech to Text Response: {}", response.text);
 ### Async Chat Completion
 
 ```rust
+use groq_api_rust::{AsyncGroqClient, ChatCompletionMessage,ChatCompletionRoles, ChatCompletionRequest};
+use tokio;
 let api_key = std::env::var("GROQ_API_KEY").unwrap();
 let client = AsyncGroqClient::new(api_key, None);
 
@@ -97,40 +99,42 @@ println!("Response 2: {}", response2.choices[0].message.content);
 ### Async Speech To Text
 
 ```rust
+use groq_api_rust::{AsyncGroqClient, SpeechToTextRequest};
+use tokio;
 let api_key = std::env::var("GROQ_API_KEY").unwrap();
-        let client = AsyncGroqClient::new(api_key, None);
+let client = AsyncGroqClient::new(api_key, None);
 
-        let audio_file_path1 = "onepiece_demo.mp4";
-        let audio_file_path2 = "save.ogg";
+let audio_file_path1 = "onepiece_demo.mp4";
+let audio_file_path2 = "save.ogg";
 
-        let (audio_data1, audio_data2) = tokio::join!(
-            tokio::fs::read(audio_file_path1),
-            tokio::fs::read(audio_file_path2)
-        );
+let (audio_data1, audio_data2) = tokio::join!(
+    tokio::fs::read(audio_file_path1),
+    tokio::fs::read(audio_file_path2)
+);
 
-        let audio_data1 = audio_data1.expect("Failed to read first audio file");
-        let audio_data2 = audio_data2.expect("Failed to read second audio file");
+let audio_data1 = audio_data1.expect("Failed to read first audio file");
+let audio_data2 = audio_data2.expect("Failed to read second audio file");
 
-        let (request1, request2) = (
-            SpeechToTextRequest::new(audio_data1)
-                .temperature(0.7)
-                .language("en")
-                .model("whisper-large-v3"),
-            SpeechToTextRequest::new(audio_data2)
-                .temperature(0.7)
-                .language("en")
-                .model("whisper-large-v3")
-        );
-        let (response1, response2) = tokio::join!(
-            client.speech_to_text(request1),
-            client.speech_to_text(request2)
-        );
+let (request1, request2) = (
+    SpeechToTextRequest::new(audio_data1)
+        .temperature(0.7)
+        .language("en")
+        .model("whisper-large-v3"),
+    SpeechToTextRequest::new(audio_data2)
+        .temperature(0.7)
+        .language("en")
+        .model("whisper-large-v3")
+);
+let (response1, response2) = tokio::join!(
+    client.speech_to_text(request1),
+    client.speech_to_text(request2)
+);
 
-        let response1 = response1.expect("Failed to get response for first audio");
-        let response2 = response2.expect("Failed to get response for second audio");
+let response1 = response1.expect("Failed to get response for first audio");
+let response2 = response2.expect("Failed to get response for second audio");
 
-        println!("Speech to Text Response 1: {:?}", response1);
-        println!("Speech to Text Response 2: {:?}", response2);
+println!("Speech to Text Response 1: {}", response1.text);
+println!("Speech to Text Response 2: {}", response2.text);
 ```
 ## TODO:
 - [ ] Implement streaming of requests.
