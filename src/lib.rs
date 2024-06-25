@@ -84,10 +84,14 @@ impl AsyncGroqClient {
             .messages
             .iter()
             .map(|m| {
-                json!({
+                let mut msg_json = json!({
                     "role": m.role,
                     "content": m.content,
-                })
+                });
+                if let Some(name) = &m.name {
+                    msg_json["name"] = json!(name);
+                }
+                msg_json
             })
             .collect::<Vec<Value>>();
 
@@ -102,6 +106,9 @@ impl AsyncGroqClient {
 
         if let Some(stop) = &request.stop {
             body["stop"] = json!(stop);
+        }
+        if let Some(seed) = &request.seed {
+            body["seed"] = json!(seed);
         }
 
         let response = self
@@ -172,6 +179,7 @@ impl GroqClient {
         let language = request.language;
         let english_text = request.english_text;
         let model = request.model;
+        let prompt = request.prompt;
         let mut form = Form::new().part("file", Part::bytes(file).file_name("audio.wav"));
 
         if let Some(temp) = temperature {
@@ -190,6 +198,9 @@ impl GroqClient {
 
         if let Some(mdl) = model {
             form = form.text("model", mdl);
+        }
+        if let Some(prompt) = prompt {
+            form = form.text("prompt", prompt.to_string());
         }
 
         let link = format!("{}{}", self.endpoint, link_addition);
@@ -212,10 +223,14 @@ impl GroqClient {
             .messages
             .iter()
             .map(|m| {
-                json!({
+                let mut msg_json = json!({
                     "role": m.role,
                     "content": m.content,
-                })
+                });
+                if let Some(name) = &m.name {
+                    msg_json["name"] = json!(name);
+                }
+                msg_json
             })
             .collect::<Vec<_>>();
 
@@ -230,6 +245,9 @@ impl GroqClient {
 
         if let Some(stop) = &request.stop {
             body["stop"] = json!(stop);
+        }
+        if let Some(seed) = &request.seed {
+            body["seed"] = json!(seed);
         }
 
         let response = self.send_request(body, &format!("{}/chat/completions", self.endpoint))?;
@@ -278,7 +296,7 @@ mod tests {
         }];
         let request = ChatCompletionRequest::new("llama3-70b-8192", messages);
         let response = client.chat_completion(request).unwrap();
-        println!("{}", response.choices[0].message.content);
+        println!("{:?}", response);
         assert!(!response.choices.is_empty());
     }
 

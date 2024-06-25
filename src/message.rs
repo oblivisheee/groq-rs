@@ -73,7 +73,10 @@ pub struct SpeechToTextRequest {
     pub model: Option<String>,
     pub temperature: Option<f64>,
     pub language: Option<String>,
+    // If true, the API will use following link: https://api.groq.com/openai/v1/audio/translations instead of https://api.groq.com/openai/v1/audio/transcriptions
     pub english_text: bool,
+    pub prompt: Option<String>,
+    pub response_format: Option<String>,
 }
 
 impl SpeechToTextRequest {
@@ -84,6 +87,8 @@ impl SpeechToTextRequest {
             temperature: None,
             language: None,
             english_text: false,
+            prompt: None,
+            response_format: None,
         }
     }
 
@@ -106,6 +111,15 @@ impl SpeechToTextRequest {
         self.model = Some(model.to_string());
         self
     }
+    pub fn prompt(mut self, prompt: &str) -> Self {
+        self.prompt = Some(prompt.to_string());
+        self
+    }
+    pub fn response_format(mut self, response_format: &str) -> Self {
+        // Currently only "text" and "json" are supported.
+        self.response_format = Some(response_format.to_string());
+        self
+    }
 }
 
 #[derive(Debug, Clone, Deserialize)]
@@ -122,6 +136,7 @@ pub struct ChatCompletionRequest {
     pub top_p: Option<f64>,
     pub stream: Option<bool>,
     pub stop: Option<Vec<String>>,
+    pub seed: Option<u64>,
 }
 
 impl ChatCompletionRequest {
@@ -134,6 +149,7 @@ impl ChatCompletionRequest {
             top_p: Some(1.0),
             stream: Some(false),
             stop: None,
+            seed: None,
         }
     }
 
@@ -159,6 +175,10 @@ impl ChatCompletionRequest {
 
     pub fn stop(mut self, stop: Vec<String>) -> Self {
         self.stop = Some(stop);
+        self
+    }
+    pub fn seed(mut self, seed: u64) -> Self {
+        self.seed = Some(seed);
         self
     }
 }
