@@ -318,7 +318,7 @@ mod tests {
         let response = client
             .speech_to_text(request)
             .expect("Failed to get response");
-        println!("Speech to Text Response: {:?}", response);
+        println!("Speech to Text Response: {}", response.text);
         assert!(!response.text.is_empty());
     }
 
