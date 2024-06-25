@@ -7,7 +7,7 @@ description = "This library provides the ability to interact with the Groq API."
 repository = "https://github.com/oblivisheee/groq-rs"
 license = "Apache-2.0"
 keywords = ["groq", "llm", "ai", "language", "api"]
-categories = ["API bindings"]
+categories = ["api-bindings"]
 
 
 [dependencies]
