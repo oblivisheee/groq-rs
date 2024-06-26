@@ -9,6 +9,24 @@ use reqwest::{
 use serde_json::{json, Value};
 use std::sync::Arc;
 
+/// An asynchronous client for interacting with the Groq API.
+///
+/// # Parameters
+///
+/// - `api_key`: The API key for authenticating with the Groq API.
+/// - `endpoint`: The URL of the Groq API endpoint. If not provided, it defaults to <https://api.groq.com/openai/v1>.
+///
+/// # Returns
+///
+/// An instance of `AsyncGroqClient` configured with the provided API key and endpoint.
+///
+/// # Example
+///
+///```
+/// use groq_client::AsyncGroqClient;
+///
+/// let client = AsyncGroqClient::new("my_api_key".to_string(), None).await;
+///```
 pub struct AsyncGroqClient {
     api_key: String,
     client: Arc<AClient>,
@@ -16,7 +34,8 @@ pub struct AsyncGroqClient {
 }
 
 impl AsyncGroqClient {
-    pub fn new(api_key: String, endpoint: Option<String>) -> Self {
+    /// Creates a new `AsyncGroqClient`
+    pub async fn new(api_key: String, endpoint: Option<String>) -> Self {
         let ep = endpoint.unwrap_or_else(|| String::from("https://api.groq.com/openai/v1"));
         Self {
             api_key,
@@ -25,6 +44,16 @@ impl AsyncGroqClient {
         }
     }
 
+    /// Sends a request to the Groq API with the provided JSON body and returns the parsed response.
+    ///
+    /// # Parameters
+    ///
+    /// - `body`: The JSON body to send in the request.
+    /// - `link`: The URL link to send the request to.
+    ///
+    /// # Returns
+    ///
+    /// The parsed JSON response from the Groq API.
     async fn send_request(&self, body: Value, link: &str) -> Result<Value, GroqError> {
         let res = self
             .client
@@ -38,6 +67,15 @@ impl AsyncGroqClient {
         self.parse_response(res).await
     }
 
+    /// Sends a speech-to-text request to the Groq API and returns the parsed response.
+    ///
+    /// # Parameters
+    ///
+    /// - `request`: The `SpeechToTextRequest` containing the audio file, temperature, language, and other options.
+    ///
+    /// # Returns
+    ///
+    /// The parsed `SpeechToTextResponse` from the Groq API.
     pub async fn speech_to_text(
         &self,
         request: SpeechToTextRequest,
@@ -78,6 +116,15 @@ impl AsyncGroqClient {
         Ok(speech_to_text_response)
     }
 
+    /// Sends a chat completion request to the Groq API and returns the parsed response.
+    ///
+    /// # Parameters
+    ///
+    /// - `request`: The `ChatCompletionRequest` containing the model, messages, temperature, max tokens, top-p, and other options.
+    ///
+    /// # Returns
+    ///
+    /// The parsed `ChatCompletionResponse` from the Groq API.
     pub async fn chat_completion(
         &self,
         request: ChatCompletionRequest,
@@ -120,6 +167,15 @@ impl AsyncGroqClient {
         Ok(chat_completion_response)
     }
 
+    /// Parses the response from a Groq API request and returns the response body as a JSON value.
+    ///
+    /// # Parameters
+    ///
+    /// - `response`: The HTTP response from the Groq API request.
+    ///
+    /// # Returns
+    ///
+    /// The parsed JSON value from the response body, or a `GroqError` if the response was not successful.
     async fn parse_response(&self, response: AResponse) -> Result<Value, GroqError> {
         let status = response.status();
         let body: Value = response.json().await?;
@@ -143,6 +199,24 @@ impl AsyncGroqClient {
     }
 }
 
+/// An client for interacting with the Groq API.
+///
+/// # Parameters
+///
+/// - `api_key`: The API key for authenticating with the Groq API.
+/// - `endpoint`: The URL of the Groq API endpoint. If not provided, it defaults to <https://api.groq.com/openai/v1>.
+///
+/// # Returns
+///
+/// An instance of `GroqClient` configured with the provided API key and endpoint.
+///
+/// # Example
+///
+///```
+/// use groq_client::GroqClient;
+///
+/// let client = GroqClient::new("my_api_key".to_string(), None);
+///```
 pub struct GroqClient {
     api_key: String,
     client: Client,
@@ -150,6 +224,16 @@ pub struct GroqClient {
 }
 
 impl GroqClient {
+    /// Constructs a new `GroqClient` instance with the provided API key and optional endpoint.
+    ///
+    /// # Parameters
+    ///
+    /// - `api_key`: The API key for authenticating with the Groq API.
+    /// - `endpoint`: The URL of the Groq API endpoint. If not provided, it defaults to <https://api.groq.com/openai/v1>.
+    ///
+    /// # Returns
+    ///
+    /// A new `GroqClient` instance configured with the provided API key and endpoint.
     pub fn new(api_key: String, endpoint: Option<String>) -> Self {
         let ep = endpoint.unwrap_or_else(|| String::from("https://api.groq.com/openai/v1"));
         Self {
@@ -159,6 +243,20 @@ impl GroqClient {
         }
     }
 
+    /// Sends a request to the Groq API with the provided JSON body and returns the parsed response.
+    ///
+    /// # Parameters
+    ///
+    /// - `body`: The JSON body to send in the request.
+    /// - `link`: The URL link to send the request to.
+    ///
+    /// # Returns
+    ///
+    /// The parsed response from the Groq API as a `Value`.
+    ///
+    /// # Errors
+    ///
+    /// Returns a `GroqError` if there is an issue sending the request or parsing the response.
     fn send_request(&self, body: Value, link: &str) -> Result<Value, GroqError> {
         let res = self
             .client
@@ -171,6 +269,19 @@ impl GroqClient {
         parse_response(res)
     }
 
+    /// Sends a speech-to-text request to the Groq API and returns the parsed response.
+    ///
+    /// # Parameters
+    ///
+    /// - `request`: A `SpeechToTextRequest` containing the necessary parameters for the speech-to-text request.
+    ///
+    /// # Returns
+    ///
+    /// The parsed `SpeechToTextResponse` from the Groq API.
+    ///
+    /// # Errors
+    ///
+    /// Returns a `Box<dyn std::error::Error>` if there is an issue sending the request or parsing the response.
     pub fn speech_to_text(
         &self,
         request: SpeechToTextRequest,
@@ -217,6 +328,15 @@ impl GroqClient {
         Ok(speech_to_text_response)
     }
 
+    /// Sends a chat completion request to the GROQ API and returns the response.
+    ///
+    /// # Parameters
+    ///
+    /// - `request` - A `ChatCompletionRequest` containing the details of the chat completion request.
+    ///
+    /// # Errors
+    ///
+    /// Returns a `GroqError` if there is an issue sending the request or parsing the response.
     pub fn chat_completion(
         &self,
         request: ChatCompletionRequest,
@@ -258,6 +378,19 @@ impl GroqClient {
     }
 }
 
+/// Parses the response from a GROQ API request and returns the response body as a JSON value.
+///
+/// # Parameters
+///
+/// - `response` - The HTTP response from the GROQ API request.
+///
+/// # Errors
+///
+/// Returns a `GroqError` if the response status is not successful or if there is an error parsing the response body.
+///
+/// # Returns
+///
+/// The response body as a JSON value.
 fn parse_response(response: Response) -> Result<Value, GroqError> {
     let status = response.status();
     let body: Value = response.json()?;
@@ -325,7 +458,7 @@ mod tests {
     #[tokio::test]
     async fn test_async_chat_completion() {
         let api_key = std::env::var("GROQ_API_KEY").unwrap();
-        let client = AsyncGroqClient::new(api_key, None);
+        let client = AsyncGroqClient::new(api_key, None).await;
 
         let messages1 = vec![ChatCompletionMessage {
             role: ChatCompletionRoles::User,
@@ -359,7 +492,7 @@ mod tests {
     #[tokio::test]
     async fn test_async_speech_to_text() {
         let api_key = std::env::var("GROQ_API_KEY").unwrap();
-        let client = AsyncGroqClient::new(api_key, None);
+        let client = AsyncGroqClient::new(api_key, None).await;
 
         let audio_file_path1 = "onepiece_demo.mp4";
         let audio_file_path2 = "save.ogg";
