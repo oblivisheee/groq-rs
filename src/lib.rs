@@ -281,11 +281,11 @@ impl GroqClient {
     ///
     /// # Errors
     ///
-    /// Returns a `Box<dyn std::error::Error>` if there is an issue sending the request or parsing the response.
+    /// Returns a `GroqError` if there is an issue sending the request or parsing the response.
     pub fn speech_to_text(
         &self,
         request: SpeechToTextRequest,
-    ) -> Result<SpeechToTextResponse, Box<dyn std::error::Error>> {
+    ) -> Result<SpeechToTextResponse, GroqError> {
         // Extract values from request
         let file = request.file;
         let temperature = request.temperature;
