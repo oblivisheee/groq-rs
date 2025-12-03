@@ -214,9 +214,20 @@ impl AsyncGroqClient {
                     let chunk = chunk.unwrap();
                     let resp_string = String::from_utf8_lossy(&chunk).trim().to_string();
 
-                    let re = regex::Regex::new(r"data:\s*(.*)").unwrap();
+                    let error_re = regex::Regex::new(r#"(\{\"error\":\s*\{.*\}})"#).unwrap();
+                    if let Some(caps) = error_re.captures(&resp_string) {
+                        return Some((
+                            Err(GroqError::ApiError {
+                                message: caps[1].to_string(),
+                                type_: "api_error".to_string(),
+                            }),
+                            stream_response,
+                        ));
+                    }
 
-                    for line in re.captures_iter(&resp_string) {
+                    let chunk_re = regex::Regex::new(r"data:\s*(.*)").unwrap();
+
+                    for line in chunk_re.captures_iter(&resp_string) {
                         let json_str = &line[1];
 
                         let delta_response: Result<ChatCompletionDeltaResponse, serde_json::Error> =
@@ -557,6 +568,96 @@ mod tests {
         assert!(!response1.choices.is_empty());
         assert!(!response2.choices.is_empty());
     }
+
+    
+    #[tokio::test]
+    async fn test_async_stream() {
+        let api_key = std::env::var("GROQ_API_KEY").unwrap();
+        let client = AsyncGroqClient::new(api_key, None).await;
+
+        let messages1 = vec![ChatCompletionMessage {
+            role: ChatCompletionRoles::User,
+            content: "Hello!".to_string(),
+            name: None,
+        }];
+        let request1 = ChatCompletionRequest::new("llama-3.3-70b-versatile", messages1)
+            .stream(true);
+
+        let messages2 = vec![ChatCompletionMessage {
+            role: ChatCompletionRoles::User,
+            content: "How are you?".to_string(),
+            name: None,
+        }];
+        let request2 = ChatCompletionRequest::new("llama-3.3-70b-versatile", messages2)
+            .stream(true);
+
+        let (stream1, stream2) = tokio::join!(
+            client.stream(request1),
+            client.stream(request2)
+        );
+
+        let stream1 = stream1.expect("Failed to get response for request 1");
+        let stream2 = stream2.expect("Failed to get response for request 2");
+
+        let mut response1 = String::new();
+        let mut response2 = String::new();
+        
+        tokio::pin!(stream1);
+        tokio::pin!(stream2);
+
+        while let Some(item) = stream1.next().await {
+            let delta = item.expect("Failed to get delta from stream 1");
+            if let Some(content) = &delta.choices[0].delta.content {
+                response1.push_str(&content);
+            }
+        }
+        println!();
+        while let Some(item) = stream2.next().await {
+            let delta = item.expect("Failed to get delta from stream 2");
+            if let Some(content) = &delta.choices[0].delta.content {
+                response2.push_str(&content);
+            }
+        }
+        println!();
+
+        println!("Response 1: {}", response1);
+        println!("Response 2: {}", response2);
+
+        assert!(!response1.is_empty());
+        assert!(!response2.is_empty());
+    }
+
+    
+    #[tokio::test]
+    async fn test_async_stream_fail() {
+        
+        let api_key = std::env::var("GROQ_API_KEY").unwrap();
+        let client = AsyncGroqClient::new(api_key, None).await;
+
+        let messages1 = vec![ChatCompletionMessage {
+            role: ChatCompletionRoles::User,
+            content: "Hello!".to_string(),
+            name: None,
+        }];
+        let request = ChatCompletionRequest::new("llama3-70b-8192", messages1)
+            .stream(true);
+
+        let stream = client.stream(request).await.expect("Failed to get response");
+        
+        tokio::pin!(stream);
+
+        while let Some(item) = stream.next().await {
+            if let Err(e) = item {
+                let expected_message = r#"API error: {"error":{"message":"The model `llama3-70b-8192` has been decommissioned and is no longer supported. Please refer to https://console.groq.com/docs/deprecations for a recommendation on which model to use instead.","type":"invalid_request_error","code":"model_decommissioned"}}"#;
+                assert_eq!(e.to_string(), expected_message);
+                return;
+            }
+            else {
+                panic!("Expected an error but got a successful response");
+            }
+        }
+    }
+
 
     #[tokio::test]
     async fn test_async_speech_to_text() {
