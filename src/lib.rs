@@ -225,21 +225,16 @@ impl AsyncGroqClient {
                     let chunk = chunk.unwrap();
                     let resp_string = String::from_utf8_lossy(&chunk).trim().to_string();
 
-                    for line in resp_string
-                        .split("\n\n")
-                    {
-                        // Every line starts with "data: "
-                        let resp_string = line.to_string()[6..].to_string();
+                    let re = regex::Regex::new(r"data:\s*(.*)").unwrap();
 
-                        if resp_string.trim() == "[DONE]" {
-                            return None;
-                        }
+                    for line in re.captures_iter(&resp_string) {
+                        let json_str = &line[1];
 
-                        let delta: Result<ChatCompletionDeltaResponse, _> =
-                            serde_json::from_str(&resp_string);
-                        match delta {
-                            Ok(d) => {
-                                return Some((Ok(d), stream_response));
+                        let delta_response: Result<ChatCompletionDeltaResponse, serde_json::Error> =
+                            serde_json::from_str(json_str);
+                        match delta_response {
+                            Ok(delta) => {
+                                return Some((Ok(delta), stream_response));
                             }
                             Err(e) => {
                                 println!("Error parsing delta: {}", e);
