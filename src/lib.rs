@@ -199,24 +199,13 @@ impl AsyncGroqClient {
         &self,
         request: ChatCompletionRequest,
     ) -> Result<
-        (
-            ChatCompletionDeltaResponse,
             impl futures::Stream<Item = Result<ChatCompletionDeltaResponse, GroqError>>,
-        ),
-        GroqError,
+            GroqError,
     > {
         let response = self.send_response(request).await?;
+        let stream_response = response.bytes_stream();
 
-        let mut stream_response = response.bytes_stream();
-
-        // The first message is the header which contains metadata like x_groq, or role
-        let header = stream_response.next().await.unwrap();
-        let header_str = String::from_utf8_lossy(&header.as_ref().unwrap().as_ref());
-        let header_resp: ChatCompletionDeltaResponse = serde_json::from_str(&header_str[6..])?;
-
-
-        Ok((
-            header_resp,
+        Ok(
             futures::stream::unfold(stream_response, |mut stream_response| async move {
                 while let Some(chunk) = stream_response.next().await {
                     if chunk.is_err() {
@@ -244,7 +233,7 @@ impl AsyncGroqClient {
                 }
                 None
             }),
-        ))
+        )
     }
 
     /// Parses the response from a Groq API request and returns the response body as a JSON value.
