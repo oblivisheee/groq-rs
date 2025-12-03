@@ -1,4 +1,5 @@
 mod message;
+use futures::StreamExt;
 pub use message::*;
 use reqwest::{
     blocking::multipart::{Form, Part},
@@ -54,7 +55,7 @@ impl AsyncGroqClient {
     /// # Returns
     ///
     /// The parsed JSON response from the Groq API.
-    async fn send_request(&self, body: Value, link: &str) -> Result<Value, GroqError> {
+    async fn send_request(&self, body: Value, link: &str) -> Result<reqwest::Response, GroqError> {
         let res = self
             .client
             .post(link)
@@ -63,8 +64,7 @@ impl AsyncGroqClient {
             .json(&body)
             .send()
             .await?;
-
-        self.parse_response(res).await
+        Ok(res)
     }
 
     /// Sends a speech-to-text request to the Groq API and returns the parsed response.
@@ -116,7 +116,7 @@ impl AsyncGroqClient {
         Ok(speech_to_text_response)
     }
 
-    /// Sends a chat completion request to the Groq API and returns the parsed response.
+    /// Internal function which sends a request to the Groq API and returns the raw response.
     ///
     /// # Parameters
     ///
@@ -125,10 +125,10 @@ impl AsyncGroqClient {
     /// # Returns
     ///
     /// The parsed `ChatCompletionResponse` from the Groq API.
-    pub async fn chat_completion(
+    async fn send_response(
         &self,
         request: ChatCompletionRequest,
-    ) -> Result<ChatCompletionResponse, GroqError> {
+    ) -> Result<reqwest::Response, GroqError> {
         let messages = request
             .messages
             .iter()
@@ -163,8 +163,93 @@ impl AsyncGroqClient {
         let response = self
             .send_request(body, &format!("{}/chat/completions", self.endpoint))
             .await?;
+        return Ok(response);
+    }
+
+    /// Sends a chat completion request to the Groq API and returns the parsed response.
+    ///
+    /// # Parameters
+    ///
+    /// - `request`: The `ChatCompletionRequest` containing the model, messages, temperature, max tokens, top-p, and other options.
+    ///
+    /// # Returns
+    ///
+    /// The parsed `ChatCompletionResponse` from the Groq API.
+    pub async fn chat_completion(
+        &self,
+        request: ChatCompletionRequest,
+    ) -> Result<ChatCompletionResponse, GroqError> {
+        let response = self.send_response(request).await?;
+        let response = self.parse_response(response).await?;
+
         let chat_completion_response: ChatCompletionResponse = serde_json::from_value(response)?;
         Ok(chat_completion_response)
+    }
+
+    /// Streams to the Groq API and returns a stream of responses.
+    ///
+    /// # Parameters
+    ///
+    /// - `request`: The `ChatCompletionRequest` containing the model, messages, temperature, max tokens, top-p, and other options.
+    ///
+    /// # Returns
+    ///
+    /// A stream of `ChatCompletionDeltaResponse` from the Groq API.
+    pub async fn stream(
+        &self,
+        request: ChatCompletionRequest,
+    ) -> Result<
+        (
+            ChatCompletionDeltaResponse,
+            impl futures::Stream<Item = Result<ChatCompletionDeltaResponse, GroqError>>,
+        ),
+        GroqError,
+    > {
+        let response = self.send_response(request).await?;
+
+        let mut stream_response = response.bytes_stream();
+
+        // The first message is the header which contains metadata like x_groq, or role
+        let header = stream_response.next().await.unwrap();
+        let header_str = String::from_utf8_lossy(&header.as_ref().unwrap().as_ref());
+        let header_resp: ChatCompletionDeltaResponse = serde_json::from_str(&header_str[6..])?;
+
+
+        Ok((
+            header_resp,
+            futures::stream::unfold(stream_response, |mut stream_response| async move {
+                while let Some(chunk) = stream_response.next().await {
+                    if chunk.is_err() {
+                        return Some((Err(GroqError::from(chunk.err().unwrap())), stream_response));
+                    }
+                    let chunk = chunk.unwrap();
+                    let resp_string = String::from_utf8_lossy(&chunk).trim().to_string();
+
+                    for line in resp_string
+                        .split("\n\n")
+                    {
+                        // Every line starts with "data: "
+                        let resp_string = line.to_string()[6..].to_string();
+
+                        if resp_string.trim() == "[DONE]" {
+                            return None;
+                        }
+
+                        let delta: Result<ChatCompletionDeltaResponse, _> =
+                            serde_json::from_str(&resp_string);
+                        match delta {
+                            Ok(d) => {
+                                return Some((Ok(d), stream_response));
+                            }
+                            Err(e) => {
+                                println!("Error parsing delta: {}", e);
+                            }
+                        }
+                    }
+                }
+                None
+            }),
+        ))
     }
 
     /// Parses the response from a Groq API request and returns the response body as a JSON value.

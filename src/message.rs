@@ -88,6 +88,51 @@ pub struct Message {
 }
 
 #[derive(Debug, Clone, Deserialize)]
+/// Represents the response from a chat completion API request.
+///
+/// - `choices`: A vector of `Choice` objects, each representing a possible response.
+/// - `created`: The timestamp (in seconds since the epoch) when the response was generated.
+/// - `id`: The unique identifier for the response.
+/// - `model`: The name of the model used to generate the response.
+/// - `object`: The type of the response object.
+/// - `system_fingerprint`: A unique identifier for the system that generated the response.
+/// - `usage`: Usage statistics for the request, including token counts and processing times.
+/// - `x_groq`: Additional metadata about the response, including the GROQ API ID.
+pub struct ChatCompletionDeltaResponse {
+    pub id: String,
+    pub object: String,
+    pub created: u64,
+    pub model: String,
+    pub system_fingerprint: String,
+    pub choices: Vec<ChoiceDelta>,
+    pub x_groq: Option<XGroq>,
+}
+
+#[derive(Debug, Clone, Deserialize)]
+/// Represents a single choice in a chat completion response.
+///
+/// - `finish_reason`: The reason the generation finished, such as "stop" or "length".
+/// - `index`: The index of the choice within the list of choices.
+/// - `logprobs`: Optional log probabilities for the tokens in the generated text.
+/// - `message`: The message associated with this choice, containing the role, content, and optional name.
+pub struct ChoiceDelta {
+    pub index: u64,
+    pub delta: Delta,
+    pub logprobs: Option<Value>,
+    pub finish_reason: Option<String>,
+}
+
+#[derive(Debug, Clone, Deserialize)]
+/// Represents a message in a chat completion response.
+///
+/// - `content`: The content of the message.
+/// - `role`: The role of the message, such as `System`, `User`, or `Assistant`.
+pub struct Delta {
+    pub role: Option<ChatCompletionRoles>,
+    pub content: Option<String>,
+}
+
+#[derive(Debug, Clone, Deserialize)]
 /// Represents usage statistics for a chat completion request, including token counts and processing times.
 ///
 /// - `completion_time`: The time (in seconds) it took to generate the completion.
