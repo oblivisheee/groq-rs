@@ -7,6 +7,7 @@ use thiserror::Error;
 /// - `RequestFailed`: Indicates a failure in the underlying HTTP request.
 /// - `JsonParseError`: Indicates a failure in parsing the JSON response from the API.
 /// - `ApiError`: Indicates an error returned by the API, with a message and error type.
+/// - `DeserializationError`: Indicates an error with deserialization, with a message and error type.
 pub enum GroqError {
     #[error("API request failed: {0}")]
     RequestFailed(#[from] reqwest::Error),
@@ -14,6 +15,8 @@ pub enum GroqError {
     JsonParseError(#[from] serde_json::Error),
     #[error("API error: {message}")]
     ApiError { message: String, type_: String },
+    #[error("Deserialization error: {message}")]
+    DeserializationError { message: String, type_: String },
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
