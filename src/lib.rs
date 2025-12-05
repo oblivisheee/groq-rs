@@ -163,7 +163,7 @@ impl AsyncGroqClient {
         let response = self
             .send_request(body, &format!("{}/chat/completions", self.endpoint))
             .await?;
-        return Ok(response);
+        Ok(response)
     }
 
     /// Sends a chat completion request to the Groq API and returns the parsed response.
@@ -237,14 +237,14 @@ impl AsyncGroqClient {
                         Some(l) => l,
                         None => {
                             println!("Breaking, no complete line yet.");
-                            break;
+                            continue;
                         }
                     };
                     let offset = stream.byte_offset();
 
                     if let Err(e) = &line {
                         if resp_string == "[DONE]" {
-                            break;
+                            return None;
                         } else {
                             return Some((
                                 Err(GroqError::DeserializationError {
@@ -261,7 +261,6 @@ impl AsyncGroqClient {
                     resp_string = resp_string[offset..].trim().to_string();
                     return Some((Ok(response.clone()), (stream_response, resp_string)));
                 }
-                None
             },
         ))
     }
