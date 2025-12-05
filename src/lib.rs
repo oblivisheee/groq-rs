@@ -128,6 +128,7 @@ impl AsyncGroqClient {
     async fn send_response(
         &self,
         request: ChatCompletionRequest,
+        stream: bool
     ) -> Result<reqwest::Response, GroqError> {
         let messages = request
             .messages
@@ -150,7 +151,7 @@ impl AsyncGroqClient {
             "temperature": request.temperature.unwrap_or(1.0),
             "max_tokens": request.max_tokens.unwrap_or(1024),
             "top_p": request.top_p.unwrap_or(1.0),
-            "stream": request.stream.unwrap_or(false),
+            "stream": request.stream.unwrap_or(stream),
         });
 
         if let Some(stop) = &request.stop {
@@ -179,7 +180,12 @@ impl AsyncGroqClient {
         &self,
         request: ChatCompletionRequest,
     ) -> Result<ChatCompletionResponse, GroqError> {
-        let response = self.send_response(request).await?;
+        if Some(true) == request.stream {
+            return Err(GroqError::InvalidRequest(
+                "Stream parameter must be set to false for non-streaming responses.".to_string(),
+            ));
+        }
+        let response = self.send_response(request, false).await?;
         let response = self.parse_response(response).await?;
 
         let chat_completion_response: ChatCompletionResponse = serde_json::from_value(response)?;
@@ -202,7 +208,12 @@ impl AsyncGroqClient {
         impl futures::Stream<Item = Result<ChatCompletionDeltaResponse, GroqError>>,
         GroqError,
     > {
-        let response = self.send_response(request).await?;
+        if Some(false) == request.stream {
+            return Err(GroqError::InvalidRequest(
+                "Stream parameter must be set to true for streaming responses.".to_string(),
+            ));
+        }
+        let response = self.send_response(request, true).await?;
         let stream_response = response.bytes_stream();
 
         Ok(futures::stream::unfold(

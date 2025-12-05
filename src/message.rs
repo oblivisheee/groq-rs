@@ -9,6 +9,8 @@ use thiserror::Error;
 /// - `ApiError`: Indicates an error returned by the API, with a message and error type.
 /// - `DeserializationError`: Indicates an error with deserialization, with a message and error type.
 pub enum GroqError {
+    #[error("Invalid request: {0}")]
+    InvalidRequest(String),
     #[error("API request failed: {0}")]
     RequestFailed(#[from] reqwest::Error),
     #[error("Failed to parse JSON: {0}")]
