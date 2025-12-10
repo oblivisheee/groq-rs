@@ -2,12 +2,12 @@ mod message;
 use futures::StreamExt;
 pub use message::*;
 use reqwest::{
+    Client as AClient, Response as AResponse,
     blocking::multipart::{Form, Part},
     blocking::{Client, Response},
     multipart::{Form as AForm, Part as APart},
-    Client as AClient, Response as AResponse,
 };
-use serde_json::{json, Deserializer, StreamDeserializer, Value};
+use serde_json::{Deserializer, StreamDeserializer, Value, json};
 use std::sync::Arc;
 
 /// An asynchronous client for interacting with the Groq API.
@@ -128,7 +128,7 @@ impl AsyncGroqClient {
     async fn send_response(
         &self,
         request: ChatCompletionRequest,
-        stream: bool
+        stream: bool,
     ) -> Result<reqwest::Response, GroqError> {
         let messages = request
             .messages

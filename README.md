@@ -136,12 +136,13 @@ let response2 = response2.expect("Failed to get response for second audio");
 println!("Speech to Text Response 1: {}", response1.text);
 println!("Speech to Text Response 2: {}", response2.text);
 ```
-## TODO:
-- [ ] Implement streaming of requests.
 
 ## Contributing
 
 Contributions are welcome! If you have an issue or want to suggest improvements, please open an issue or submit a pull request.
+
+Special thanks to [terryluan12](https://github.com/terryluan12) for implemention of streaming requests.
+
 
 ## License
 
