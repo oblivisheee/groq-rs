@@ -223,13 +223,13 @@ impl AsyncGroqClient {
         Ok(futures::stream::unfold(
             (stream_response, String::new()),
             move |(mut stream_response, mut resp_string)| async move {
-                // Remove prefix if it exists
-                resp_string = resp_string
-                    .strip_prefix(&prefix)
-                    .unwrap_or(&resp_string)
-                    .to_string();
-
                 loop {
+                    // Remove prefix if it exists
+                    resp_string = resp_string
+                        .strip_prefix(&prefix)
+                        .unwrap_or(&resp_string)
+                        .to_string();
+
                     // Attempts to deserialize resp_string
                     let mut stream: StreamDeserializer<_, ChatCompletionDeltaResponse> =
                         Deserializer::from_slice(resp_string.as_bytes()).into_iter();
@@ -254,11 +254,6 @@ impl AsyncGroqClient {
                         }
                         let chunk = String::from_utf8_lossy(&chunk.unwrap()).trim().to_string();
                         resp_string.push_str(&chunk);
-                        resp_string = resp_string
-                            .strip_prefix(&prefix)
-                            .unwrap_or(&resp_string)
-                            .to_string();
-
                         continue;
                     } else {
                         // If the stream has ended, and resp_string is not empty/[DONE]
