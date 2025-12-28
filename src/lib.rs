@@ -219,11 +219,11 @@ impl AsyncGroqClient {
         // Returns a stream that outputs everything returned from groq
         // resp_string is the current state of what has been returned
         // stream_response is what groq has currently sent
+        let prefix = "data: ";
         Ok(futures::stream::unfold(
             (stream_response, String::new()),
-            |(mut stream_response, mut resp_string)| async move {
+            move |(mut stream_response, mut resp_string)| async move {
                 // Remove prefix if it exists
-                let prefix = String::from("data: ");
                 resp_string = resp_string
                     .strip_prefix(&prefix)
                     .unwrap_or(&resp_string)
@@ -240,7 +240,7 @@ impl AsyncGroqClient {
                         if let Ok(line) = line {
                             let offset = stream.byte_offset();
                             resp_string = resp_string[offset..].trim().to_string();
-                            return Some((Ok(line.clone()), (stream_response, resp_string)));
+                            return Some((Ok(line), (stream_response, resp_string)));
                         } else if resp_string == "[DONE]" {
                             return None;
                         }
