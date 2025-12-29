@@ -255,6 +255,8 @@ impl AsyncGroqClient {
                         let chunk = String::from_utf8_lossy(&chunk.unwrap()).trim().to_string();
                         resp_string.push_str(&chunk);
                         continue;
+                    } else if resp_string.is_empty() {
+                        return None;
                     } else {
                         // If the stream has ended, and resp_string is not empty/[DONE]
                         // then parsing must have failed, and there must be a deserialization error
