@@ -216,61 +216,58 @@ impl AsyncGroqClient {
         let response = self.send_response(request, true).await?;
         let stream_response = response.bytes_stream();
 
+        // Returns a stream that outputs everything returned from groq
+        // resp_string is the current state of what has been returned
+        // stream_response is what groq has currently sent
+        let prefix = "data: ";
         Ok(futures::stream::unfold(
             (stream_response, String::new()),
-            |(mut stream_response, mut resp_string)| async move {
-                let prefix = String::from("data: ");
-                if let Some(chunk) = stream_response.next().await {
-                    if let Err(e) = chunk {
-                        return Some((Err(GroqError::from(e)), (stream_response, resp_string)));
-                    }
-                    let chunk = String::from_utf8_lossy(&chunk.unwrap()).trim().to_string();
-                    resp_string.push_str(&chunk);
-                }
-
+            move |(mut stream_response, mut resp_string)| async move {
                 loop {
-                    if resp_string[..prefix.len()] != prefix {
-                        return Some((
-                            Err(GroqError::ApiError {
-                                message: resp_string.clone(),
-                                type_: "api_error".to_string(),
-                            }),
-                            (stream_response, resp_string),
-                        ));
-                    } else {
-                        resp_string = resp_string[prefix.len()..].to_string();
-                    }
+                    // Remove prefix if it exists
+                    resp_string = resp_string
+                        .strip_prefix(&prefix)
+                        .unwrap_or(&resp_string)
+                        .to_string();
 
+                    // Attempts to deserialize resp_string
                     let mut stream: StreamDeserializer<_, ChatCompletionDeltaResponse> =
                         Deserializer::from_slice(resp_string.as_bytes()).into_iter();
 
-                    let line = match stream.next() {
-                        Some(l) => l,
-                        None => {
-                            println!("Breaking, no complete line yet.");
-                            continue;
-                        }
-                    };
-                    let offset = stream.byte_offset();
-
-                    if let Err(e) = &line {
-                        if resp_string == "[DONE]" {
+                    if let Some(line) = stream.next() {
+                        // If resp_string has a valid ChatCompletionDeltaResponse, return it
+                        // If erroring, check that it does not equal [DONE]
+                        if let Ok(line) = line {
+                            let offset = stream.byte_offset();
+                            resp_string = resp_string[offset..].trim().to_string();
+                            return Some((Ok(line), (stream_response, resp_string)));
+                        } else if resp_string == "[DONE]" {
                             return None;
-                        } else {
-                            return Some((
-                                Err(GroqError::DeserializationError {
-                                    message: e.to_string(),
-                                    type_: format!("{:?}", e.classify()),
-                                }),
-                                (stream_response, resp_string),
-                            ));
                         }
                     }
 
-                    let response = line.unwrap();
-
-                    resp_string = resp_string[offset..].trim().to_string();
-                    return Some((Ok(response.clone()), (stream_response, resp_string)));
+                    if let Some(chunk) = stream_response.next().await {
+                        // Get the next chunk from the groq stream,
+                        // append it to resp_string and continue the loop to try and deserialize
+                        if let Err(e) = chunk {
+                            return Some((Err(GroqError::from(e)), (stream_response, resp_string)));
+                        }
+                        let chunk = String::from_utf8_lossy(&chunk.unwrap()).trim().to_string();
+                        resp_string.push_str(&chunk);
+                        continue;
+                    } else if resp_string.is_empty() {
+                        return None;
+                    } else {
+                        // If the stream has ended, and resp_string is not empty/[DONE]
+                        // then parsing must have failed, and there must be a deserialization error
+                        return Some((
+                            Err(GroqError::DeserializationError {
+                                message: resp_string.clone(),
+                                type_: "DeserializationError".to_string(),
+                            }),
+                            (stream_response, resp_string),
+                        ));
+                    }
                 }
             },
         ))
@@ -289,19 +286,19 @@ impl AsyncGroqClient {
         let status = response.status();
         let body: Value = response.json().await?;
 
-        if !status.is_success() {
-            if let Some(error) = body.get("error") {
-                return Err(GroqError::ApiError {
-                    message: error["message"]
-                        .as_str()
-                        .unwrap_or("Unknown error")
-                        .to_string(),
-                    type_: error["type"]
-                        .as_str()
-                        .unwrap_or("unknown_error")
-                        .to_string(),
-                });
-            }
+        if !status.is_success()
+            && let Some(error) = body.get("error")
+        {
+            return Err(GroqError::ApiError {
+                message: error["message"]
+                    .as_str()
+                    .unwrap_or("Unknown error")
+                    .to_string(),
+                type_: error["type"]
+                    .as_str()
+                    .unwrap_or("unknown_error")
+                    .to_string(),
+            });
         }
 
         Ok(body)
@@ -504,19 +501,19 @@ fn parse_response(response: Response) -> Result<Value, GroqError> {
     let status = response.status();
     let body: Value = response.json()?;
 
-    if !status.is_success() {
-        if let Some(error) = body.get("error") {
-            return Err(GroqError::ApiError {
-                message: error["message"]
-                    .as_str()
-                    .unwrap_or("Unknown error")
-                    .to_string(),
-                type_: error["type"]
-                    .as_str()
-                    .unwrap_or("unknown_error")
-                    .to_string(),
-            });
-        }
+    if !status.is_success()
+        && let Some(error) = body.get("error")
+    {
+        return Err(GroqError::ApiError {
+            message: error["message"]
+                .as_str()
+                .unwrap_or("Unknown error")
+                .to_string(),
+            type_: error["type"]
+                .as_str()
+                .unwrap_or("unknown_error")
+                .to_string(),
+        });
     }
 
     Ok(body)
@@ -673,7 +670,7 @@ mod tests {
 
         while let Some(item) = stream.next().await {
             if let Err(e) = item {
-                let expected_message = r#"API error: {"error":{"message":"The model `llama3-70b-8192` has been decommissioned and is no longer supported. Please refer to https://console.groq.com/docs/deprecations for a recommendation on which model to use instead.","type":"invalid_request_error","code":"model_decommissioned"}}"#;
+                let expected_message = r#"Deserialization error: {"error":{"message":"The model `llama3-70b-8192` has been decommissioned and is no longer supported. Please refer to https://console.groq.com/docs/deprecations for a recommendation on which model to use instead.","type":"invalid_request_error","code":"model_decommissioned"}}"#;
                 assert_eq!(e.to_string(), expected_message);
                 return;
             } else {
